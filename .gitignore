@@ -1,0 +1,79 @@
+@ -9,6 +9,9 @@
+/[Bb]uild/
+/[Bb]uilds/
+/_build/
+/[Ll]ogs/
+/[Ll]ibrary/
+/[Uu]ser[Ss]ettings/
+/[Aa]ssets/[Pp]lugins/
+/[Aa]ssets/[Ii]ronSource/
+/[Aa]ssets/[Gg]oogleMobile/
+/[Aa]ssets/[Aa]daptive Perfoemance/
+/[Aa]ssets/[Aa]ddressableAssetsData
+/[Aa]ssets/[Aa]Animation
+/[Aa]ssets/[Aa]EckTechGames
+/[Aa]ssets/[Gg]PM
+/[Aa]ssets/_PIGI
+/[Aa]ssets/_OBJ
+/[Aa]ssets/[Tt]oon
+/[Aa]ssets/[Tt]extMesh Pro
+/[Aa]ssets/[Mm]aterial/olds
+/[Aa]ssets/[Ii]mages
+/[Aa]ssets/[Aa]nimation
+/[Aa]ssets/[Ee]ckTechGames
+/[Aa]ssets/[Aa]nim
+/[Aa]ssets/[Ff]onts
+/[Aa]ssets/[Ss]FX
+/[Aa]ssets/[Aa]ssetKits
+/[Aa]ssets/[Gg]abrielBissonnette/
+/[Aa]ssets/[Ss]creenshotUtility/
+/[Aa]ssets/[Gg]radientURP/
+/[Aa]ssets/_Image/
+/[Gg]PM/
+/[Pp]ackages/
+/[Pp]rojectSettings/
+/[Cc]apture/
+/[Oo]bj/
+
+# MemoryCaptures can get excessive in size.
+# They also could contain extremely sensitive data
+@ -51,6 +54,10 @@ ExportedObj/
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+*.meta
+*.anim
+*.blob
+*.json
+
+# Unity3D generated file on crash reports
+sysinfo.txt
+@ -60,6 +67,22 @@ sysinfo.txt
+*.aab
+*.unitypackage
+*.app
+*.dll
+*.pdf
+*.unity
+*.md
+*.asset
+*.prefab
+*.meta
+*.csproj
+*.sln
+*.conf
+
+#media files
+*.mp3
+*.wav
+*.png
+*.jpg
+*.jpeg
+*.psd
+*.keystore
+*.txt
+*.DS_Store
+*.ttf
+
+# Crashlytics generated file
+crashlytics-build.properties

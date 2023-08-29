@@ -1,0 +1,16 @@
+<linker>
+	<assembly fullname="Assembly-CSharp">
+		<type fullname="AudioCtrl/AudioData" preserve="nothing" serialized="true"/>
+	</assembly>
+	<assembly fullname="DOTween">
+		<type fullname="DG.Tweening.Core.DOTweenSettings/ModulesSetup" preserve="nothing" serialized="true"/>
+		<type fullname="DG.Tweening.Core.DOTweenSettings/SafeModeOptions" preserve="nothing" serialized="true"/>
+	</assembly>
+	<assembly fullname="Sirenix.Serialization">
+		<type fullname="Sirenix.Serialization.SerializationData" preserve="nothing" serialized="true"/>
+	</assembly>
+	<assembly fullname="UnityEngine.CoreModule">
+		<type fullname="UnityEngine.Events.PersistentCallGroup" preserve="nothing" serialized="true"/>
+		<type fullname="UnityEngine.Events.UnityEvent" preserve="nothing" serialized="true"/>
+	</assembly>
+</linker>
