@@ -5,37 +5,33 @@ using System.Threading.Tasks;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 
+public enum SpiderState { idle, findingFood, findingMate, havingSex }
+
 public class SpiderObj : MonoBehaviour
 {
     [SerializeField] Head head_prefab;
     [SerializeField] Child child_prefab;
+    [SerializeField] public bool readyToHaveSex;
 
     [SerializeField] float moveSpeedInSec;
     [SerializeField] float moveVelocity;
     [SerializeField, ReadOnly] private float moveVelocityRandom;
 
-    [SerializeField, BoxGroup("Heads")]
-    int headCount;
-    [BoxGroup("Head")]
-    public float headSize, headMass, headDrag;
-    [ReadOnly, BoxGroup("Head")]
-    public List<Head> heads;
+    [SerializeField, BoxGroup("Heads")] public int headCount;
+    [BoxGroup("Head")] public float headSize, headMass, headDrag;
+    [ReadOnly, BoxGroup("Head")] public List<Head> heads;
 
-    [SerializeField, BoxGroup("Child")]
-    int childCount;
-    [SerializeField, BoxGroup("Child")]
-    public float childSize, childMass, childDrag;
-    [ReadOnly, BoxGroup("Childs")]
-    public List<Child> children;
+    [SerializeField, BoxGroup("Child")] int childCount;
+    [SerializeField, BoxGroup("Child")] public float childSize, childMass, childDrag;
+    [ReadOnly, BoxGroup("Childs")] public List<Child> children;
 
-    [SerializeField, BoxGroup("Joints")]
-    public float jointDistance, jointDamping;
-    [SerializeField, BoxGroup("Joints")]
-    public int jointUpdateFrequency;
+    [SerializeField, BoxGroup("Joints")] public float jointDistance, jointDamping;
+    [SerializeField, BoxGroup("Joints")] public int jointUpdateFrequency;
 
-
-    private GameObject targetFood;
+    private GameObject targetFood, targetMate;
     private Vector2 vec = Vector2.zero;
+
+    private SpiderState state;
 
     [Button]
     public void Init()
@@ -50,9 +46,14 @@ public class SpiderObj : MonoBehaviour
         head.GetComponent<SpringJoint2D>().enabled = false;
         heads.Add(head);
 
-        for(int i = 0; i<headCount; i++)
+        for (int i = 0; i < headCount; i++)
         {
             AddHead();
+        }
+
+        for (int i = 0; i < childCount; i++)
+        {
+            AddChild();
         }
 
         SetHeadPos();
@@ -60,9 +61,9 @@ public class SpiderObj : MonoBehaviour
 
     public void DestroySpider()
     {
-        for(int i = heads.Count - 1; i >= 0; i--)
+        for (int i = heads.Count - 1; i >= 0; i--)
         {
-            if(heads[i] != null) Destroy(heads[i].gameObject);
+            if (heads[i] != null) Destroy(heads[i].gameObject);
             heads.RemoveAt(i);
         }
 
@@ -101,39 +102,24 @@ public class SpiderObj : MonoBehaviour
 
         heads[idx].gameObject.GetComponent<Rigidbody2D>().DOMove(vec * moveVelocity * moveVelocityRandom, moveSpeedInSec)
             .SetRelative(true)
-            .OnComplete(() => {
+            .OnComplete(() =>
+            {
                 MoveHead(nextIdx);
             });
 
     }
 
-    private void Start()
+    public void Start()
     {
-        moveVelocityRandom = Random.Range(0.5f, 1f);
-        
+        moveVelocityRandom = 0.5f;
+        if (!GameManager.Instance.spiders.Contains(this))
+        {
+            GameManager.Instance.spiders.Add(this);
+        }
+
         Init();
         MoveHead(0);
-    }
-
-    private void Update()
-    {
-        if(Time.frameCount % 30 == 0)
-        {
-            targetFood = FindNearestFood();
-            if (targetFood == null) return;
-
-            if(Vector2.Distance(heads[0].transform.position, targetFood.transform.position) < 0.5f)
-            {
-                AddChild();
-                GameManager.Instance.DesroyFood(targetFood);
-                return;
-            }
-
-            Debug.DrawLine(heads[0].gameObject.transform.position, targetFood.transform.position, Color.red, 0.5f);
-
-            vec = targetFood.transform.position - heads[0].gameObject.transform.position;
-            vec.Normalize();
-        }
+        SetHeadPos();
     }
 
     [Button]
@@ -144,13 +130,21 @@ public class SpiderObj : MonoBehaviour
         UpdateWeights();
         AddChildToTheHead(GetHeadWithLeastChildren());
         SetHeadPos();
+
+        if(children.Count > 6)
+        {
+            if(Random.Range(0f, 1f) < 0.1f)
+            {
+                readyToHaveSex = true;
+            }
+        }
     }
 
     private void PlaySFX()
     {
         int rnd = Random.Range(0, 3);
 
-        switch(rnd)
+        switch (rnd)
         {
             case 0:
                 AudioCtrl.Instance.PlaySFXbyTag(SFX_tag.darkFX1);
@@ -178,7 +172,7 @@ public class SpiderObj : MonoBehaviour
         int min = int.MaxValue;
         Head headWithMinChildren = null;
 
-        for(int i = 1; i<heads.Count; i++)
+        for (int i = 1; i < heads.Count; i++)
         {
             if (heads[i].children.Count < min)
             {
@@ -192,7 +186,7 @@ public class SpiderObj : MonoBehaviour
     [Button]
     private void UpdateWeights()
     {
-        foreach(Head head in heads)
+        foreach (Head head in heads)
         {
             head.gameObject.transform.localScale = Vector3.one * headSize;
             Rigidbody2D rigidBody = head.GetComponent<Rigidbody2D>();
@@ -226,11 +220,27 @@ public class SpiderObj : MonoBehaviour
     }
 
     [Button]
-    private void SetHeadPos()
+    public void SetHeadPos()
     {
-        float dist = 0.5f + children.Count * 2f / 20f;
+        float dist;
+        Vector2 pos;
+        if (heads.Count == 3)
+        {
+            dist = 0.5f + children.Count * 2f / 10f;
 
-        Vector2 pos = heads[0].gameObject.transform.position;
+            pos = heads[0].gameObject.transform.position;
+            pos.y += dist;
+            heads[1].transform.position = pos;
+
+            pos = heads[0].gameObject.transform.position;
+            pos.y -= dist;
+            heads[2].transform.position = pos;
+            return;
+        }
+
+        dist = 0.5f + children.Count * 2f / 18f;
+
+        pos = heads[0].gameObject.transform.position;
         pos.x += dist;
         pos.y += dist;
         heads[1].transform.position = pos;
@@ -240,10 +250,12 @@ public class SpiderObj : MonoBehaviour
         pos.y -= dist;
         heads[2].transform.position = pos;
 
+
         pos = heads[0].gameObject.transform.position;
         pos.x -= dist;
         pos.y += dist;
         heads[3].transform.position = pos;
+
 
         pos = heads[0].gameObject.transform.position;
         pos.x -= dist;
@@ -251,23 +263,169 @@ public class SpiderObj : MonoBehaviour
         heads[4].transform.position = pos;
     }
 
-    private GameObject FindNearestFood()
+    private void FindNearestFood()
     {
-        List<GameObject> foods = GameManager.Instance.foods;
+        List<Food> foods = GameManager.Instance.foods;
 
         float minDist = float.MaxValue;
         GameObject nearFood = null;
 
-        foreach(GameObject food in foods)
+        foreach (Food food in foods)
         {
+            if (!food.ShouldIGet(this)) continue;
             float dist = Vector2.Distance(heads[0].gameObject.transform.position, food.transform.position);
-            if(dist<minDist)
+            if (dist < minDist)
             {
                 minDist = dist;
-                nearFood = food;
+                nearFood = food.gameObject;
             }
         }
 
-        return nearFood;
+        if(targetFood != nearFood)
+        {
+            if(targetFood!=null) targetFood.GetComponent<Food>().RemoveMe(this);
+            nearFood.GetComponent<Food>().AddMe(this);
+
+            targetFood = nearFood;
+        }
+    }
+
+    private GameObject FindMate()
+    {
+        List<SpiderObj> spiders = GameManager.Instance.spiders;
+
+        foreach (SpiderObj spider in spiders)
+        {
+            if (spider == this) continue;
+            if (spider.readyToHaveSex)
+            {
+                return spider.gameObject;
+            }
+        }
+
+        return null;
+    }
+
+    private void Update()
+    {
+        if (Time.frameCount % 40 == 0)
+        {
+            switch (state)
+            {
+                case SpiderState.idle:
+                    OnIdleState();
+                    break;
+                case SpiderState.findingFood:
+                    OnFindingFood();
+                    break;
+                case SpiderState.findingMate:
+                    OnFindingMate();
+                    break;
+                case SpiderState.havingSex:
+                    vec = Vector2.zero;
+                    break;
+            }
+
+            OnAnyState();
+        }
+    }
+
+    private void ChangeState(SpiderState _state)
+    {
+        if (state == _state) return;
+
+        state = _state;
+
+        switch (state)
+        {
+            case SpiderState.idle:
+                vec = Vector2.zero;
+                break;
+            case SpiderState.findingFood:
+                break;
+            case SpiderState.findingMate:
+                moveVelocityRandom = 1.75f;
+                break;
+            case SpiderState.havingSex:
+                GameManager.Instance.HaveSex(this, targetMate.GetComponent<SpiderObj>());
+                vec = Vector2.zero;
+                break;
+        }
+    }
+
+    private void OnAnyState()
+    {
+        if (!readyToHaveSex) return;
+
+        GameObject mate = FindMate();
+        if (mate != null) ChangeState(SpiderState.findingMate);
+    }
+
+    private void OnIdleState()
+    {
+        FindNearestFood();
+        if (targetFood != null) ChangeState(SpiderState.findingFood);
+    }
+
+    private void OnFindingFood()
+    {
+        FindNearestFood();
+        if (targetFood == null)
+        {
+            ChangeState(SpiderState.idle);
+        }
+
+        vec = targetFood.transform.position - heads[0].gameObject.transform.position;
+        vec.Normalize();
+
+        if (Vector2.Distance(heads[0].transform.position, targetFood.transform.position) < 0.6f)
+        {
+            AddChild();
+            GameManager.Instance.DesroyFood(targetFood.GetComponent<Food>());
+            return;
+        }
+    }
+
+    private void OnFindingMate()
+    {
+        targetMate = FindMate();
+        if (targetMate == null || !readyToHaveSex)
+        {
+            ChangeState(SpiderState.idle);
+            moveVelocityRandom = 1f;
+            return;
+        }
+
+        vec = targetMate.GetComponent<SpiderObj>().heads[0].transform.position - heads[0].gameObject.transform.position;
+        vec.Normalize();
+
+        if (Vector2.Distance(heads[0].transform.position, targetMate.GetComponent<SpiderObj>().heads[0].transform.position) < 1f)
+        {
+            ChangeState(SpiderState.havingSex);
+            return;
+        }
+    }
+
+    public void BeginSex(float duration = 0.25f)
+    {
+        ChangeState(SpiderState.havingSex);
+        foreach (Child child in children)
+        {
+            child.GetComponent<Rigidbody2D>().isKinematic = true;
+            child.transform.DOShakePosition(0.5f, 0.05f * Random.Range(0.5f, 1.5f), 20, 90, false, false)
+                .SetLoops(-1, LoopType.Yoyo);
+        }
+    }
+
+    public void EndSex()
+    {
+        foreach (Child child in children)
+        {
+            DOTween.Kill(child.transform);
+            child.GetComponent<Rigidbody2D>().isKinematic = false;
+        }
+
+        moveVelocityRandom = 0.8f;
+        ChangeState(SpiderState.idle);
     }
 }

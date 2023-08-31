@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
-public enum SFX_tag { darkFX1, darkFX2, darkFX3, bgm }
+public enum SFX_tag { darkFX1, darkFX2, darkFX3, bgm, sex0, sex1, sex2, sex3, sex4, sex5 }
 
 public class AudioCtrl : SerializedMonoBehaviour
 {
