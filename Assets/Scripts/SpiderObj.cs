@@ -33,10 +33,15 @@ public class SpiderObj : MonoBehaviour
 
     private SpiderState state;
 
+    bool initiated = false;
+
     [Button]
-    public void Init()
+    public void Init(Vector3 pos)
     {
+        if (initiated) return;
         DestroySpider();
+
+        gameObject.transform.position = pos;
 
         if (headCount <= 0) headCount = 1;
         Head head = Instantiate(head_prefab, gameObject.transform);
@@ -56,7 +61,20 @@ public class SpiderObj : MonoBehaviour
             AddChild();
         }
 
+        moveVelocityRandom = 0.5f;
+        if (!GameManager.Instance.spiders.Contains(this))
+        {
+            GameManager.Instance.spiders.Add(this);
+        }
+
         SetHeadPos();
+        MoveHead(0);
+        initiated = true;
+    }
+
+    private void Start()
+    {
+        Init(gameObject.transform.position);
     }
 
     public void DestroySpider()
@@ -107,19 +125,6 @@ public class SpiderObj : MonoBehaviour
                 MoveHead(nextIdx);
             });
 
-    }
-
-    public void Start()
-    {
-        moveVelocityRandom = 0.5f;
-        if (!GameManager.Instance.spiders.Contains(this))
-        {
-            GameManager.Instance.spiders.Add(this);
-        }
-
-        Init();
-        MoveHead(0);
-        SetHeadPos();
     }
 
     [Button]
@@ -265,6 +270,8 @@ public class SpiderObj : MonoBehaviour
 
     private void FindNearestFood()
     {
+        if (!initiated) Init(gameObject.transform.position);
+
         List<Food> foods = GameManager.Instance.foods;
 
         float minDist = float.MaxValue;

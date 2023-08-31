@@ -116,9 +116,7 @@ public class GameManager : MonoBehaviour
         //new spider
         SpiderObj newSpider = Instantiate(spider_prefab, gameObject.transform);
         newSpider.headCount = Random.Range(0, 2) == 0 ? 2 : 4;
-        newSpider.Start();
-        newSpider.heads[0].transform.position = Vector3.Lerp(A.heads[0].gameObject.transform.position, B.heads[0].gameObject.transform.position, 0.5f);
-        newSpider.SetHeadPos();
+        newSpider.Init(Vector3.Lerp(A.heads[0].gameObject.transform.position, B.heads[0].gameObject.transform.position, 0.5f));
 
         //add food
         for (int i = 0; i < 4; i++)
